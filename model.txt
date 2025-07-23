@@ -1,0 +1,67 @@
+针对考虑车辆类型差异、时间窗约束（硬/软）、配送时间（含路程+服务时间）及固定成本的车辆路径规划问题，数学建模如下：
+一、模型要素定义
+类别	符号	描述
+集合	( V = {0} \cup V_c )	节点集合（0：配送中心；( V_c )：客户点集合）
+	( K )	车辆集合（异质车型）
+参数	( q_i )	客户 ( i ) 的需求量（( i \in V_c ))
+	( Q_k, v_k )	车型 ( k ) 的载重容量、平均行驶速度
+	( F_k )	车型 ( k ) 的固定启用成本
+	( d_{ij} )	节点 ( i ) 到 ( j ) 的距离
+	( [e_i, l_i] )	客户 ( i ) 的时间窗（硬约束必须满足；软约束可违背但需惩罚）
+	( s_i )	客户 ( i ) 的服务时间
+	( c_{ij}^k )	车型 ( k ) 行驶弧 ( (i,j) ) 的单位距离成本
+决策变量	( x_{ij}^k )	二元变量：车型 ( k ) 是否经过弧 ( (i,j) )（1：是；0：否）
+	( y_k )	二元变量：车型 ( k ) 是否启用（1：是；0：否）
+	( a_i )	车辆到达客户 ( i ) 的时间
+	( u_i^k )	车型 ( k ) 离开客户 ( i ) 时的累计载重
+辅助变量	( \delta_i^+, \delta_i^- )	软时间窗违背量（早到等待时间、迟到时间）
+二、目标函数
+最小化总成本（固定成本 + 运输成本 + 时间窗惩罚）：
+\min Z = \underbrace{\sum_{k \in K} F_k y_k}_{\text{固定成本}} + \underbrace{\sum_{k \in K} \sum_{i,j \in V} c_{ij}^k d_{ij} x_{ij}^k}_{\text{运输成本}} + \underbrace{\sum_{i \in V_c} \left( \beta \delta_i^+ + \gamma \delta_i^- \right)}_{\text{时间窗惩罚成本}}
+( \beta, \gamma )：早到/迟到的单位惩罚系数（硬时间窗时 ( \beta \to \infty, \gamma \to \infty )）
+运输成本与路程时间关联：弧 ( (i,j) ) 的行驶时间 ( t{ij} = d{ij}/v_k ) 
+三、核心约束
+1.流量守恒与路径连续性：
+2.$$
+3.\sum{j \in V} x{ij}^k = \sum{j \in V} x{ji}^k = yk, \quad \forall i \in {0}, k \in K
+$$
+$$
+\sum{k \in K} \sum{j \in V} x{ij}^k = 1, \quad \forall i \in V_c
+4.$$
+5.（每个客户仅被服务一次，车辆从配送中心出发并返回）
+6.容量约束：
+7.$$
+8.u_i^k + q_j \leq u_j^k + Qk(1 - x{ij}^k), \quad \forall i,j \in V_c, k \in K
+9.$$
+10.$$
+11.q_i \leq u_i^k \leq Q_k, \quad \forall i \in V_c, k \in K
+12.$$
+13.（避免车型超载，且载重随服务累积）
+14.时间窗约束：
+15.到达时间计算：
+16.$$
+17.a_j \geq a_i + si + \frac{d{ij}}{vk} - M(1 - x{ij}^k), \quad \forall i,j \in V_c, k \in K
+18.$$
+19.软时间窗违背量：
+20.$$
+21.\delta_i^+ \geq \max(0, e_i - a_i), \quad \delta_i^- \geq \max(0, a_i - l_i), \quad \forall i \in V_c
+22.$$
+23.（硬时间窗需强制 ( e_i \leq a_i \leq l_i )，软时间窗通过惩罚项处理）
+24.车辆启用关联：
+25.$$
+26.\sum{i,j \in V} x{ij}^k \leq M \cdot y_k, \quad \forall k \in K
+27.$$
+28.（若车型 ( k ) 被启用，才可分配路径）
+29.变量域：
+30.$$
+31.x_{ij}^k, y_k \in {0,1}, \quad a_i, \delta_i^+, \delta_i^- \geq 0
+32.$$
+四、模型特点
+1.异质车辆处理：车型参数 ( (Q_k, v_k, F_k) ) 差异化影响容量、速度与成本 
+2.时间窗灵活性： 
+硬时间窗：通过严格约束 ( a_i \in [e_i, l_i] ) 保证准时性 
+软时间窗：通过惩罚项 ( \beta \delta_i^+ + \gamma \delta_i^- ) 平衡成本与服务体验 
+3.时间计算完整性：到达时间 ( aj ) 包含行驶时间 ( d{ij}/v_k ) 和服务时间 ( s_i ) 
+4.固定成本整合：启用变量 ( y_k ) 将车型选择纳入目标函数 
+此模型为混合整数规划（MIP），可通过分支定价法、启发式算法（如ALNS、遗传算法）求解大规模实例。车辆类型时间窗硬/配送时间路程时间）成本的车辆问题，如下：
+
