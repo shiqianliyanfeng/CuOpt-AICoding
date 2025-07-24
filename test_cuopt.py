@@ -32,7 +32,7 @@ data = {
 
 cuopt_service_client = CuOptServiceSelfHostClient(
     ip="0.0.0.0",
-    port=8000,
+    port="5000",
     polling_timeout=25,
     timeout_exception=False
 )
