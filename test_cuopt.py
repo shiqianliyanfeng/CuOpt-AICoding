@@ -37,7 +37,7 @@ cuopt_service_client = CuOptServiceSelfHostClient(
     timeout_exception=False
 )
 
-def repoll(solution, repoll_tries):
+def repoll(solution, repoll_tries=500):
     if "reqId" in solution and "response" not in solution:
         req_id = solution["reqId"]
         for i in range(repoll_tries):
@@ -48,8 +48,7 @@ def repoll(solution, repoll_tries):
     return solution
 
 solution = cuopt_service_client.get_LP_solve(data, response_type="dict")
-repoll_tries = 500
-solution = repoll(solution, repoll_tries)
+solution = repoll(solution)
 
 # 输出结果
 if "response" in solution:
