@@ -1,6 +1,6 @@
+from cuopt_sh_client import CuOptServiceSelfHostClient
 import json
 import numpy as np
-import cuopt
 import matplotlib.pyplot as plt
 import time
 
@@ -13,121 +13,224 @@ class VRPBatchSolver:
             "mip": {"objective": [], "time": [], "used_vehicles": []},
             "vrp": {"objective": [], "time": [], "used_vehicles": []}
         }
+        self.cuopt_service_client = CuOptServiceSelfHostClient(
+            ip="0.0.0.0",
+            port=8000,
+            polling_timeout=25,
+            timeout_exception=False
+        )
 
-    def solve_mip(self, instance):
-        # MIP方式建模（使用cuOpt Model接口，简化版）
-        model = cuopt.Model()
+    def repoll(self, solution, repoll_tries=500):
+        if "reqId" in solution and "response" not in solution:
+            req_id = solution["reqId"]
+            for i in range(repoll_tries):
+                solution = self.cuopt_service_client.repoll(req_id, response_type="dict")
+                if "reqId" in solution and "response" in solution:
+                    break
+                time.sleep(1)
+        return solution
+
+    def solve_vrp(self, instance):
+        # 构造 routing server 所需数据结构
+        num_vehicles = instance["num_vehicles"]
+        depot = instance["depot"] if "depot" in instance else 0
         nodes = instance["nodes"]
         customers = instance["customers"]
-        num_vehicles = instance["num_vehicles"]
+        distance_matrix = np.array(instance["distance_matrix"])
+        demands = instance["demands"]
         vehicle_capacities = instance["vehicle_capacities"]
         vehicle_fixed_costs = instance["vehicle_fixed_costs"]
         vehicle_speeds = instance["vehicle_speeds"]
         vehicle_cost_per_km = instance["vehicle_cost_per_km"]
-        distance_matrix = np.array(instance["distance_matrix"])
-        demands = instance["demands"]
         time_windows = instance["time_windows"]
         service_times = instance["service_times"]
-        beta = instance["beta"]
-        gamma = instance["gamma"]
+        beta = instance.get("beta", 10)
+        gamma = instance.get("gamma", 20)
 
-        # 决策变量
-        x = {}
+        data = {
+            "cost_matrix_data": {
+                "data": {
+                    "0": distance_matrix.tolist()
+                }
+            },
+            "task_data": {
+                "task_locations": customers,
+                "demands": [demands[i] for i in customers],
+                "time_windows": [list(time_windows[i]) for i in customers],
+                "service_times": [service_times[i] for i in customers]
+            },
+            "fleet_data": {
+                "vehicle_locations": [[depot] for _ in range(num_vehicles)],
+                "capacities": vehicle_capacities,
+                "fixed_costs": vehicle_fixed_costs,
+                "speeds": vehicle_speeds,
+                "cost_per_distance": vehicle_cost_per_km,
+                "time_windows": [list(time_windows[depot]) for _ in range(num_vehicles)]
+            },
+            "penalties": {
+                "early": beta,
+                "late": gamma
+            }
+        }
+
+        start = time.time()
+        solution = self.cuopt_service_client.get_optimized_routes(data)
+        solution = self.repoll(solution)
+        elapsed = time.time() - start
+
+        used_vehicles = 0
+        objective = None
+        routes = []
+        if "response" in solution:
+            resp = solution["response"]
+            objective = resp.get("objective_value", None)
+            routes = resp.get("routes", [])
+            used_vehicles = sum(1 for route in routes if len(route) > 2)
+        return objective, elapsed, used_vehicles, routes
+
+    def solve_mip(self, instance):
+        # 构造MIP问题CSR格式数据（仅举例，完整约束需补充）
+        num_vehicles = instance["num_vehicles"]
+        depot = instance["depot"] if "depot" in instance else 0
+        nodes = instance["nodes"]
+        customers = instance["customers"]
+        distance_matrix = np.array(instance["distance_matrix"])
+        demands = instance["demands"]
+        vehicle_capacities = instance["vehicle_capacities"]
+        vehicle_fixed_costs = instance["vehicle_fixed_costs"]
+        vehicle_speeds = instance["vehicle_speeds"]
+        vehicle_cost_per_km = instance["vehicle_cost_per_km"]
+        time_windows = instance["time_windows"]
+        service_times = instance["service_times"]
+        beta = instance.get("beta", 10)
+        gamma = instance.get("gamma", 20)
+
+        variable_names = []
+        variable_types = []
+        variable_bounds_lb = []
+        variable_bounds_ub = []
+
+        x_indices = []
         for k in range(num_vehicles):
             for i in nodes:
                 for j in nodes:
                     if i != j:
-                        x[i, j, k] = model.add_variable(name=f"x_{i}_{j}_{k}", var_type="binary")
-        y = {k: model.add_variable(name=f"y_{k}", var_type="binary") for k in range(num_vehicles)}
-        a = {i: model.add_variable(name=f"a_{i}", lb=0) for i in nodes}
-        u = {(i, k): model.add_variable(name=f"u_{i}_{k}", lb=0, ub=vehicle_capacities[k]) for i in nodes for k in range(num_vehicles)}
-        delta_plus = {i: model.add_variable(name=f"delta_plus_{i}", lb=0) for i in customers}
-        delta_minus = {i: model.add_variable(name=f"delta_minus_{i}", lb=0) for i in customers}
+                        variable_names.append(f"x_{i}_{j}_{k}")
+                        variable_types.append("B")
+                        variable_bounds_lb.append(0)
+                        variable_bounds_ub.append(1)
+                        x_indices.append((i, j, k))
+        y_indices = []
+        for k in range(num_vehicles):
+            variable_names.append(f"y_{k}")
+            variable_types.append("B")
+            variable_bounds_lb.append(0)
+            variable_bounds_ub.append(1)
+            y_indices.append(k)
+        a_indices = []
+        for i in nodes:
+            variable_names.append(f"a_{i}")
+            variable_types.append("C")
+            variable_bounds_lb.append(0)
+            variable_bounds_ub.append(1e5)
+            a_indices.append(i)
+        u_indices = []
+        for i in nodes:
+            for k in range(num_vehicles):
+                variable_names.append(f"u_{i}_{k}")
+                variable_types.append("C")
+                variable_bounds_lb.append(0)
+                variable_bounds_ub.append(vehicle_capacities[k])
+                u_indices.append((i, k))
+        delta_plus_indices = []
+        delta_minus_indices = []
+        for i in customers:
+            variable_names.append(f"delta_plus_{i}")
+            variable_types.append("C")
+            variable_bounds_lb.append(0)
+            variable_bounds_ub.append(1e5)
+            delta_plus_indices.append(i)
+            variable_names.append(f"delta_minus_{i}")
+            variable_types.append("C")
+            variable_bounds_lb.append(0)
+            variable_bounds_ub.append(1e5)
+            delta_minus_indices.append(i)
 
-        # 目标函数
-        fixed_cost = sum(vehicle_fixed_costs[k] * y[k] for k in range(num_vehicles))
-        transport_cost = sum(
-            vehicle_cost_per_km[k] * distance_matrix[i][j] * x[i, j, k]
-            for k in range(num_vehicles) for i in nodes for j in nodes if i != j
-        )
-        time_window_penalty = sum(
-            beta * delta_plus[i] + gamma * delta_minus[i] for i in customers
-        )
-        model.set_objective(fixed_cost + transport_cost + time_window_penalty, sense="min")
+        # 约束和目标函数转CSR格式（这里只写部分约束，完整模型需补充所有约束）
+        csr_offsets = [0]
+        csr_indices = []
+        csr_values = []
+        upper_bounds = []
+        lower_bounds = []
 
-        # 约束（简化版，详见model.txt）
-        depot = 0
         # 每个客户仅被服务一次
         for i in customers:
-            model.add_constraint(
-                sum(x[j, i, k] for k in range(num_vehicles) for j in nodes if j != i) == 1
-            )
-        # 流量守恒
-        for k in range(num_vehicles):
-            model.add_constraint(
-                sum(x[depot, j, k] for j in customers) == y[k]
-            )
-            model.add_constraint(
-                sum(x[j, depot, k] for j in customers) == y[k]
-            )
-        # 容量约束
-        for k in range(num_vehicles):
-            for i in customers:
-                model.add_constraint(u[i, k] >= demands[i])
-                model.add_constraint(u[i, k] <= vehicle_capacities[k])
-            for i in customers:
-                for j in customers:
-                    if i != j:
-                        model.add_constraint(
-                            u[i, k] + demands[j] - u[j, k] <= vehicle_capacities[k] * (1 - x[i, j, k])
-                        )
-        # 时间窗约束
-        M = 1e5
-        for k in range(num_vehicles):
-            for i in nodes:
-                for j in customers:
-                    if i != j:
-                        travel_time = distance_matrix[i][j] / vehicle_speeds[k]
-                        model.add_constraint(
-                            a[j] >= a[i] + service_times[i] + travel_time - M * (1 - x[i, j, k])
-                        )
+            row_indices = []
+            row_values = []
+            for k in range(num_vehicles):
+                for j in nodes:
+                    if j != i:
+                        idx = variable_names.index(f"x_{j}_{i}_{k}")
+                        row_indices.append(idx)
+                        row_values.append(1.0)
+            csr_indices.extend(row_indices)
+            csr_values.extend(row_values)
+            csr_offsets.append(len(csr_indices))
+            upper_bounds.append(1.0)
+            lower_bounds.append(1.0)
+
+        # 目标函数
+        objective_coeffs = [0.0] * len(variable_names)
+        for k in y_indices:
+            objective_coeffs[variable_names.index(f"y_{k}")] += vehicle_fixed_costs[k]
+        for (i, j, k) in x_indices:
+            idx = variable_names.index(f"x_{i}_{j}_{k}")
+            objective_coeffs[idx] += vehicle_cost_per_km[k] * distance_matrix[i][j]
         for i in customers:
-            e_i, l_i = time_windows[i]
-            model.add_constraint(delta_plus[i] >= e_i - a[i])
-            model.add_constraint(delta_minus[i] >= a[i] - l_i)
-        # 车辆启用关联
-        for k in range(num_vehicles):
-            model.add_constraint(
-                sum(x[i, j, k] for i in nodes for j in nodes if i != j) <= M * y[k]
-            )
+            idx_plus = variable_names.index(f"delta_plus_{i}")
+            idx_minus = variable_names.index(f"delta_minus_{i}")
+            objective_coeffs[idx_plus] += beta
+            objective_coeffs[idx_minus] += gamma
 
-        # 求解
+        data = {
+            "csr_constraint_matrix": {
+                "offsets": csr_offsets,
+                "indices": csr_indices,
+                "values": csr_values
+            },
+            "constraint_bounds": {
+                "upper_bounds": upper_bounds,
+                "lower_bounds": lower_bounds
+            },
+            "objective_data": {
+                "coefficients": objective_coeffs,
+                "scalability_factor": 1.0,
+                "offset": 0.0
+            },
+            "variable_bounds": {
+                "upper_bounds": variable_bounds_ub,
+                "lower_bounds": variable_bounds_lb
+            },
+            "maximize": False,
+            "variable_names": variable_names,
+            "variable_types": variable_types,
+            "solver_config": {
+                "time_limit": 60
+            }
+        }
+
         start = time.time()
-        solution = model.solve()
+        solution = self.cuopt_service_client.get_LP_solve(data, response_type="dict")
+        solution = self.repoll(solution)
         elapsed = time.time() - start
 
-        used_vehicles = sum(solution[f"y_{k}"] for k in range(num_vehicles))
-        return solution["objective_value"], elapsed, used_vehicles
-
-    def solve_vrp(self, instance):
-        # VRP方式建模（cuOpt Solver接口）
-        solver = cuopt.Solver()
-        solver.set_distance_matrix(np.array(instance["distance_matrix"]))
-        solver.set_vehicle_capacity(instance["vehicle_capacities"])
-        solver.set_vehicle_fixed_cost(instance["vehicle_fixed_costs"])
-        solver.set_vehicle_speed(instance["vehicle_speeds"])
-        solver.set_vehicle_cost_per_distance(instance["vehicle_cost_per_km"])
-        solver.set_demands(instance["demands"])
-        solver.set_time_windows(instance["time_windows"])
-        solver.set_service_times(instance["service_times"])
-        solver.set_time_window_penalty(instance["beta"], instance["gamma"])
-
-        start = time.time()
-        result = solver.solve()
-        elapsed = time.time() - start
-
-        used_vehicles = sum(1 for route in result.routes if len(route) > 2)
-        return result.objective, elapsed, used_vehicles, result.routes
+        used_vehicles = 0
+        objective = None
+        if "response" in solution:
+            resp = solution["response"]
+            objective = resp.get("objective_value", None)
+            used_vehicles = sum(resp["variable_values"][variable_names.index(f"y_{k}")] for k in y_indices)
+        return objective, elapsed, used_vehicles
 
     def batch_solve(self, method="mip"):
         for idx, instance in enumerate(self.data):
@@ -141,7 +244,7 @@ class VRPBatchSolver:
                 self.stats["vrp"]["objective"].append(obj)
                 self.stats["vrp"]["time"].append(t)
                 self.stats["vrp"]["used_vehicles"].append(used)
-            print(f"{method.upper()} Instance {idx+1}/{self.num_instances}: Obj={obj:.2f}, Time={t:.2f}s, Used Vehicles={used}")
+            print(f"{method.upper()} Instance {idx+1}/{self.num_instances}: Obj={obj}, Time={t:.2f}s, Used Vehicles={used}")
 
     def show_stats(self):
         for method in ["mip", "vrp"]:
@@ -181,45 +284,6 @@ class VRPBatchSolver:
         plt.legend()
         plt.show()
 
-    def visualize_progress(self, method="vrp", instance_idx=0, interval=0.5, max_time=10):
-        """
-        可视化单次求解过程中当前时间最好目标值的变化曲线。
-        仅支持cuOpt Solver（VRP方式），MIP方式需自行实现callback。
-        """
-        instance = self.data[instance_idx]
-        solver = cuopt.Solver()
-        solver.set_distance_matrix(np.array(instance["distance_matrix"]))
-        solver.set_vehicle_capacity(instance["vehicle_capacities"])
-        solver.set_vehicle_fixed_cost(instance["vehicle_fixed_costs"])
-        solver.set_vehicle_speed(instance["vehicle_speeds"])
-        solver.set_vehicle_cost_per_distance(instance["vehicle_cost_per_km"])
-        solver.set_demands(instance["demands"])
-        solver.set_time_windows(instance["time_windows"])
-        solver.set_service_times(instance["service_times"])
-        solver.set_time_window_penalty(instance["beta"], instance["gamma"])
-
-        best_objectives = []
-        times = []
-        start = time.time()
-        elapsed = 0
-
-        # cuOpt Solver支持callback或progress接口时可用，否则模拟
-        while elapsed < max_time:
-            result = solver.solve(time_limit=interval)
-            elapsed = time.time() - start
-            best_objectives.append(result.objective)
-            times.append(elapsed)
-            if elapsed + interval > max_time:
-                break
-
-        plt.figure(figsize=(8,5))
-        plt.plot(times, best_objectives, marker='o')
-        plt.xlabel("Time (s)")
-        plt.ylabel("Best Objective Value")
-        plt.title(f"求解进程目标值变化 (Instance {instance_idx}, {method.upper()})")
-        plt.grid(True)
-        plt.show()
-
 # 用法示例
 if __name__ == "__main__":
     solver = VRPBatchSolver("vrp_dataset_100.json")
@@ -228,4 +292,3 @@ if __name__ == "__main__":
     solver.show_stats()
     solver.plot_stats()
     solver.plot_routes(instance_idx=0, method="vrp")
-    solver.visualize_progress(method="vrp", instance_idx=0, interval=1, max_time=10)
