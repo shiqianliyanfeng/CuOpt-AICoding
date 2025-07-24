@@ -31,8 +31,8 @@ data = {
 
 # If cuOpt is not running on localhost:5000, edit ip and port parameters
 cuopt_service_client = CuOptServiceSelfHostClient(
-    ip="localhost",
-    port=5000,
+    ip="0.0.0.0",
+    port="5000",
     timeout_exception=False
 )
 
