@@ -53,8 +53,8 @@ solution = repoll(solution)
 # 输出结果
 if "response" in solution:
     resp = solution["response"]
-    print("x =", resp["solver_response"])
-    print("y =", resp["solver_response"])
-    print("目标值 =", resp["solver_response"])
+    print("x =", resp)
+    #print("y =", resp["solver_response"])
+    #print("目标值 =", resp["solver_response"])
 else:
     print(json.dumps(solution, indent=4))
