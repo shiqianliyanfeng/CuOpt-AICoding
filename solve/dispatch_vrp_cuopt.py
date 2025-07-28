@@ -81,6 +81,7 @@ data = {
         "service_times": [service_times[i] for i in customers]
     },
     "fleet_data": {
+        "vehicle_locations": [[0,0],[0,0]],
         "capacities": vehicle_capacities,
         "vehicle_fixed_costs": [w_fixed * fc for fc in vehicle_fixed_costs]
     }
