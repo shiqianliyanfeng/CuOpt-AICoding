@@ -297,13 +297,6 @@ data = {
     "variable_types": variable_types,
     "solver_config": {
         "time_limit": 300
-    },
-    "weights": {
-        "w_fixed": 1.0,
-        "w_distance": 1.0,
-        "w_early": 1.0,
-        "w_late": 1.0,
-        "w_unserved": 1.0,
     }
 }
 
