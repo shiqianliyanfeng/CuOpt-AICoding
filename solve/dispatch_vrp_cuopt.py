@@ -76,21 +76,15 @@ data = {
     },
     "task_data": {
         "task_locations": customers,
-        "demands": [demands[i] for i in customers],
-        "time_windows": [list(time_windows[i]) for i in customers],
+        "demand": [demands[i] for i in customers],
+        "task_time_windows": [list(time_windows[i]) for i in customers],
         "service_times": [service_times[i] for i in customers]
     },
     "fleet_data": {
         "vehicle_locations": [[depot] for _ in range(num_vehicles)],
         "capacities": vehicle_capacities,
-        "fixed_costs": [w_fixed * fc for fc in vehicle_fixed_costs],
-        "speeds": vehicle_speeds,
-        "cost_per_distance": [w_distance * c for c in vehicle_cost_per_km],
-        "time_windows": [list(time_windows[depot]) for _ in range(num_vehicles)]
-    },
-    "penalties": {
-        "early": w_early * early_penalty,
-        "late": w_late * late_penalty
+        "vehicle_fixed_costs": [w_fixed * fc for fc in vehicle_fixed_costs],
+        "vehicle_time_windows": [list(time_windows[depot]) for _ in range(num_vehicles)]
     }
 }
 
