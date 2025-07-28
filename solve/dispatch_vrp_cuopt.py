@@ -81,10 +81,8 @@ data = {
         "service_times": [service_times[i] for i in customers]
     },
     "fleet_data": {
-        "vehicle_locations": [[depot] for _ in range(num_vehicles)],
         "capacities": vehicle_capacities,
-        "vehicle_fixed_costs": [w_fixed * fc for fc in vehicle_fixed_costs],
-        "vehicle_time_windows": [list(time_windows[depot]) for _ in range(num_vehicles)]
+        "vehicle_fixed_costs": [w_fixed * fc for fc in vehicle_fixed_costs]
     }
 }
 
