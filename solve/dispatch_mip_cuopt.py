@@ -296,7 +296,7 @@ data = {
     "variable_names": variable_names,
     "variable_types": variable_types,
     "solver_config": {
-        "time_limit": 300
+        "time_limit": 500
     }
 }
 
