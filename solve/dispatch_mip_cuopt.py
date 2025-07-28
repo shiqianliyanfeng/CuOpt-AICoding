@@ -324,24 +324,30 @@ def repoll(solution, repoll_tries=500):
             time.sleep(1)
     return solution
 
-solution = cuopt_service_client.get_LP_solve(data, response_type="dict")
-solution = repoll(solution)
 
-# 输出结果
-if "response" in solution:
-    resp = solution["response"]
-    if "solver_response" in resp and "solution" in resp["solver_response"]:
-        sol = resp["solver_response"]["solution"]
-        vars = sol.get("vars", {})
-        objective = sol.get("primal_objective", None)
-        for k in y_indices:
-            print(f"车辆{k}是否启用:", vars.get(f"y_{k}"))
-        for i in a_indices:
-            print(f"客户{i}到达时间:", vars.get(f"a_{i}"),
-                  "早到惩罚:", vars.get(f"delta_plus_{i}"),
-                  "迟到惩罚:", vars.get(f"delta_minus_{i}"))
-        print("目标值:", objective)
+if __name__ == "__main__":
+    # 运行示例
+    data = gen_model_data()
+    print("模型数据生成完毕，准备发送到CuOpt服务。")
+    solution = cuopt_service_client.get_LP_solve(data, response_type="dict")
+    solution = repoll(solution)
+
+    # 输出结果
+    if "response" in solution:
+        resp = solution["response"]
+        if "solver_response" in resp and "solution" in resp["solver_response"]:
+            sol = resp["solver_response"]["solution"]
+            vars = sol.get("vars", {})
+            objective = sol.get("primal_objective", None)
+            for k in y_indices:
+                print(f"车辆{k}是否启用:", vars.get(f"y_{k}"))
+            for i in a_indices:
+                print(f"客户{i}到达时间:", vars.get(f"a_{i}"),
+                    "早到惩罚:", vars.get(f"delta_plus_{i}"),
+                    "迟到惩罚:", vars.get(f"delta_minus_{i}"))
+            print("目标值:", objective)
+        else:
+            print(json.dumps(resp, indent=4))
     else:
-        print(json.dumps(resp, indent=4))
-else:
-    print(json.dumps(solution, indent=4))
+        print(json.dumps(solution, indent=4))
+        
