@@ -11,7 +11,7 @@ def gen_model_data():
     customers = nodes[1:]
     coords = np.random.rand(num_customers + 1, 2) * 100
     distance_matrix = np.round(np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=2), 2).tolist()
-    demands = [[0, 3, 2, 4, 1]]
+    demands = [[3, 2, 4, 1]]
     vehicle_capacities = [[5, 7]]
     vehicle_fixed_costs = [100, 120]
     vehicle_speeds = [40, 30]
