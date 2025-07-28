@@ -11,8 +11,8 @@ def gen_model_data():
     customers = nodes[1:]
     coords = np.random.rand(num_customers + 1, 2) * 100
     distance_matrix = np.round(np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=2), 2).tolist()
-    demands = [0] + [3, 2, 4, 1]
-    vehicle_capacities = [[5, 7],[5,7]]
+    demands = [[0, 3, 2, 4, 1]]
+    vehicle_capacities = [[5, 7]]
     vehicle_fixed_costs = [100, 120]
     vehicle_speeds = [40, 30]
     vehicle_cost_per_km = [2, 3]
@@ -75,7 +75,7 @@ data = {
         }
     },
     "task_data": {
-        #"task_locations": customers,
+        "task_locations": customers,
         "demand": [demands[i] for i in customers],
         "task_time_windows": [list(time_windows[i]) for i in customers],
         "service_times": [service_times[i] for i in customers]
