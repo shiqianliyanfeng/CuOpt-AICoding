@@ -1,4 +1,4 @@
-#from cuopt_sh_client import CuOptServiceSelfHostClient
+from cuopt_sh_client import CuOptServiceSelfHostClient
 import json
 import time
 import numpy as np
