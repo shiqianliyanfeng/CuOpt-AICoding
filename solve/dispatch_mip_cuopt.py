@@ -1,4 +1,4 @@
-from cuopt_sh_client import CuOptServiceSelfHostClient
+#from cuopt_sh_client import CuOptServiceSelfHostClient
 import json
 import time
 import numpy as np
@@ -59,6 +59,7 @@ def gen_model_data():
     }
 
 model_data = gen_model_data()
+print(model_data)
 
 # 变量名和类型
 variable_names = []
