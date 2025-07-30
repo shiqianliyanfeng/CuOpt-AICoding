@@ -266,13 +266,13 @@ for idx, k in enumerate(y_indices):
 for (i, j, k) in x_indices:
     idx = variable_names.index(f"x_{i}_{j}_{k}")
     objective_coeffs[idx] += w_distance * model_data["vehicle_cost_per_km"][k] * model_data["distance_matrix"][i][j]
-for i in model_data["customers"]:
-    idx_plus = variable_names.index(f"delta_plus_{i}")
-    idx_minus = variable_names.index(f"delta_minus_{i}")
-    objective_coeffs[idx_plus] += w_early * model_data["beta"]
-    objective_coeffs[idx_minus] += w_late * model_data["gamma"]
-    idx_z = variable_names.index(f"z_{i}")
-    objective_coeffs[idx_z] += w_unserved * model_data["lambda_demand"][i]
+# for i in model_data["customers"]:
+#     idx_plus = variable_names.index(f"delta_plus_{i}")
+#     idx_minus = variable_names.index(f"delta_minus_{i}")
+#     objective_coeffs[idx_plus] += w_early * model_data["beta"]
+#     objective_coeffs[idx_minus] += w_late * model_data["gamma"]
+#     idx_z = variable_names.index(f"z_{i}")
+#     objective_coeffs[idx_z] += w_unserved * model_data["lambda_demand"][i]
 
 data = {
     "csr_constraint_matrix": {
@@ -297,7 +297,7 @@ data = {
     "variable_names": variable_names,
     "variable_types": variable_types,
     "solver_config": {
-        "time_limit": 500
+        "time_limit": 100
     }
 }
 
