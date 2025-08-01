@@ -23,7 +23,7 @@ def gen_model_data():
     time_windows = [(0, 500)]
     for _ in customers:
         e = random.randint(0, 0)
-        l = e + random.randint(200, 300)
+        l = e + random.randint(100, 200)
         time_windows.append((e, l))
     service_times = [0] + [random.randint(3, 10) for _ in customers]
     
