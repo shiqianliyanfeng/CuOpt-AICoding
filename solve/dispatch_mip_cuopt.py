@@ -145,7 +145,7 @@ for i in model_data["customers"]:
     row_values = []
     for k in range(model_data["num_vehicles"]):
         for j in model_data["nodes"]:
-            if j != i:
+            if j < i:
                 idx = variable_names.index(f"x_{j}_{i}_{k}")
                 row_indices.append(idx)
                 row_values.append(1.0)
@@ -217,7 +217,7 @@ for k in range(model_data["num_vehicles"]):
                 row_indices.append(idx_z_j)
                 row_values.append(model_data["demands"][i])
 
-                idx_x_ijk = variable_names.index(f"x_{j}_{i}_{k}")
+                idx_x_ijk = variable_names.index(f"x_{i}_{j}_{k}")
                 row_indices.append(idx_x_ijk)
                 row_values.append(model_data["vehicle_capacities"][k])
 
