@@ -85,12 +85,6 @@ data = {
             "0": distance_matrix
         }
     },
-    "travel_time_matrix_data": {
-        "data": {
-            "1": cost_matrix[0],
-            "2": cost_matrix[1]
-        }
-    },
     "task_data": {
         "task_locations": customers,
         "demand": [[demands[i] for i in customers]],
