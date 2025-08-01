@@ -99,7 +99,7 @@ for i in model_data["customers"]:
 
 # u[i,k]: 车辆k在节点i的载重
 u_indices = []
-for i in model_data["customers"]:
+for i in model_data["nodes"]:
     for k in range(model_data["num_vehicles"]):
         variable_names.append(f"u_{i}_{k}")
         variable_types.append("C")
