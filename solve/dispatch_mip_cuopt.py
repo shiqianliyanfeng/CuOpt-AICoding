@@ -16,7 +16,7 @@ def gen_model_data():
     vehicle_capacities = [random.randint(5, 10) for _ in range(num_vehicles)]
     vehicle_speeds = [random.randint(30, 60) for _ in range(num_vehicles)]
     vehicle_fixed_costs = [random.randint(0, 10) for _ in range(num_vehicles)]
-    vehicle_cost_per_km = [round(random.uniform(1.5, 3.5), 2) for _ in range(num_vehicles)]
+    vehicle_cost_per_km = [round(random.uniform(0.005, 0.015), 2) for _ in range(num_vehicles)]
     time_windows = [(0, 100)]
     for _ in customers:
         e = random.randint(10, 30)
@@ -26,7 +26,7 @@ def gen_model_data():
     beta = 10
     gamma = 20
     eta = 10
-    lambda_demand = [0] + [round(50 * demands[i], 2) for i in customers]
+    lambda_demand = [0] + [round(500 * demands[i], 2) for i in customers]
     cost_matrix = []
     for k in range(num_vehicles):
         cost_matrix.append([[round(distance_matrix[i][j] * vehicle_cost_per_km[k], 2) for j in nodes] for i in nodes])
