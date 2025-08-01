@@ -139,13 +139,50 @@ csr_values = []
 upper_bounds = []
 lower_bounds = []
 
+# 约束：每辆车从depot出发一次
+for k in range(model_data["num_vehicles"]):
+    row_indices = []
+    row_values = []
+    for j in model_data["nodes"]:
+        if j != model_data["depot"]:
+            idx = variable_names.index(f"x_{model_data['depot']}_{j}_{k}")
+            row_indices.append(idx)
+            row_values.append(1.0)
+
+    idy = variable_names.index(f"y_{k}")
+    row_indices.append(idy)
+    row_values.append(-1.0)
+    csr_indices.extend(row_indices)
+    csr_values.extend(row_values)
+    csr_offsets.append(len(csr_indices))
+    upper_bounds.append(0.0)
+    lower_bounds.append(0.0)
+
+# 约束：每辆车回到depot一次
+for k in range(model_data["num_vehicles"]):
+    row_indices = []
+    row_values = []
+    for j in model_data["nodes"]:
+        if j != model_data["depot"]:
+            idx = variable_names.index(f"x_{j}_{model_data['depot']}_{k}")
+            row_indices.append(idx)
+            row_values.append(1.0)
+    idy = variable_names.index(f"y_{k}")
+    row_indices.append(idy)
+    row_values.append(-1.0)
+    csr_indices.extend(row_indices)
+    csr_values.extend(row_values)
+    csr_offsets.append(len(csr_indices))
+    upper_bounds.append(0.0)
+    lower_bounds.append(0.0)
+
 # 约束：每个客户被访问次数等于z_i
 for i in model_data["customers"]:
     row_indices = []
     row_values = []
     for k in range(model_data["num_vehicles"]):
         for j in model_data["nodes"]:
-            if j < i:
+            if j != i:
                 idx = variable_names.index(f"x_{j}_{i}_{k}")
                 row_indices.append(idx)
                 row_values.append(1.0)
@@ -186,17 +223,17 @@ for k in range(model_data["num_vehicles"]):
                 row_indices = []
                 row_values = []
 
-                idx_u_i = variable_names.index(f"u_{i}_{k}")
-                row_indices.append(idx_u_i)
+                idx_u_ik = variable_names.index(f"u_{i}_{k}")
+                row_indices.append(idx_u_ik)
                 row_values.append(1.0)
 
-                idx_u_j = variable_names.index(f"u_{j}_{k}")
-                row_indices.append(idx_u_j)
+                idx_u_jk = variable_names.index(f"u_{j}_{k}")
+                row_indices.append(idx_u_jk)
                 row_values.append(-1.0)
 
                 idx_z_j = variable_names.index(f"z_{j}")
                 row_indices.append(idx_z_j)
-                row_values.append(model_data["demands"][i])
+                row_values.append(model_data["demands"][j])
 
                 idx_x_ijk = variable_names.index(f"x_{i}_{j}_{k}")
                 row_indices.append(idx_x_ijk)
@@ -206,20 +243,20 @@ for k in range(model_data["num_vehicles"]):
                 csr_values.extend(row_values)
                 csr_offsets.append(len(csr_indices))
                 upper_bounds.append(model_data["vehicle_capacities"][k])
-                lower_bounds.append(0.0)
+                lower_bounds.append(-np.inf)
 
 for k in range(model_data["num_vehicles"]):
-    for i in model_data["customers"]:
+    for j in model_data["customers"]:
                 row_indices = []
                 row_values = []
 
-                idx_u_i = variable_names.index(f"u_{i}_{k}")
-                row_indices.append(idx_u_i)
+                idx_u_jk = variable_names.index(f"u_{j}_{k}")
+                row_indices.append(idx_u_jk)
                 row_values.append(-1.0)
 
-                idx_z_i = variable_names.index(f"z_{i}")
-                row_indices.append(idx_z_i)
-                row_values.append(model_data["demands"][i])
+                idx_z_j = variable_names.index(f"z_{j}")
+                row_indices.append(idx_z_j)
+                row_values.append(model_data["demands"][j])
 
                 csr_indices.extend(row_indices)
                 csr_values.extend(row_values)
@@ -274,50 +311,14 @@ for i in model_data["customers"]:
     csr_values.extend(row_values)
     csr_offsets.append(len(csr_indices))
     upper_bounds.append(np.inf)
-    lower_bounds.append(-model_data["time_windows"][i][0])
-
-# 约束：每辆车从depot出发一次
-for k in range(model_data["num_vehicles"]):
-    row_indices = []
-    row_values = []
-    for j in model_data["nodes"]:
-        if j != model_data["depot"]:
-            idx = variable_names.index(f"x_{model_data['depot']}_{j}_{k}")
-            row_indices.append(idx)
-            row_values.append(1.0)
-        idy = variable_names.index(f"y_{k}")
-        row_indices.append(idy)
-        row_values.append(-1.0)
-    csr_indices.extend(row_indices)
-    csr_values.extend(row_values)
-    csr_offsets.append(len(csr_indices))
-    upper_bounds.append(0.0)
-    lower_bounds.append(0.0)
-
-# 约束：每辆车回到depot一次
-for k in range(model_data["num_vehicles"]):
-    row_indices = []
-    row_values = []
-    for j in model_data["nodes"]:
-        if j != model_data["depot"]:
-            idx = variable_names.index(f"x_{j}_{model_data['depot']}_{k}")
-            row_indices.append(idx)
-            row_values.append(1.0)
-        idy = variable_names.index(f"y_{k}")
-        row_indices.append(idy)
-        row_values.append(-1.0)
-    csr_indices.extend(row_indices)
-    csr_values.extend(row_values)
-    csr_offsets.append(len(csr_indices))
-    upper_bounds.append(0.0)
-    lower_bounds.append(0.0)
+    lower_bounds.append(model_data["time_windows"][i][0])
 
 # 约束：每辆车初始载重为0
 for k in range(model_data["num_vehicles"]):
     row_indices = []
     row_values = []
-    idx_u_0 = variable_names.index(f"u_{0}_{k}")
-    row_indices.append(idx_u_0)
+    idx_u_0k = variable_names.index(f"u_{model_data['depot']}_{k}")
+    row_indices.append(idx_u_0k)
     row_values.append(1.0)
     csr_indices.extend(row_indices)
     csr_values.extend(row_values)
@@ -325,7 +326,7 @@ for k in range(model_data["num_vehicles"]):
     upper_bounds.append(0.0)
     lower_bounds.append(0.0)
 
-idx_a_0 = variable_names.index(f"a_{0}")
+idx_a_0 = variable_names.index(f"a_{model_data['depot']}")
 row_indices = [idx_a_0]
 row_values = [1.0]
 csr_indices.extend(row_indices)
@@ -337,8 +338,8 @@ lower_bounds.append(0.0)
 for k in range(model_data["num_vehicles"]):
     row_indices = []
     row_values = []
-    for i in model_data["customers"]:
-        for j in model_data["customers"]:
+    for i in model_data["nodes"]:
+        for j in model_data["nodes"]:
             if j != i:
                 idx = variable_names.index(f"x_{j}_{i}_{k}")
                 row_indices.append(idx)
