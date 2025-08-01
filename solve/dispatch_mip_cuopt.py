@@ -26,7 +26,7 @@ def gen_model_data():
     beta = 10
     gamma = 20
     eta = 10
-    lambda_demand = [0] + [round(20 * demands[i], 2) for i in customers]
+    lambda_demand = [0] + [round(50 * demands[i], 2) for i in customers]
     cost_matrix = []
     for k in range(num_vehicles):
         cost_matrix.append([[round(distance_matrix[i][j] * vehicle_cost_per_km[k], 2) for j in nodes] for i in nodes])
