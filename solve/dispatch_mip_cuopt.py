@@ -90,7 +90,7 @@ for k in range(model_data["num_vehicles"]):
 
 # a[i]: 到达时间
 a_indices = []
-for i in model_data["customers"]:
+for i in model_data["nodes"]:
     variable_names.append(f"a_{i}")
     variable_types.append("C")
     variable_bounds_lb.append(0)
