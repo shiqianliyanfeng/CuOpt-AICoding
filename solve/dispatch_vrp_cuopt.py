@@ -89,7 +89,7 @@ data = {
         "task_locations": customers,
         "demand": [[demands[i] for i in customers]],
         "task_time_windows": [list(time_windows[i]) for i in customers],
-        "service_times": [service_times[i] for i in customers]
+        #"service_times": [service_times[i] for i in customers]
     },
     "fleet_data": {
         "vehicle_locations": [[0,0] for _ in range(num_vehicles)],
