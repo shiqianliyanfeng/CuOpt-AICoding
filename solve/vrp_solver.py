@@ -476,3 +476,4 @@ if __name__ == "__main__":
     solver = VRPMIPSolver()
     solution = solver.solve()
     solver.print_solution(solution)
+    solver.plot_routes(solution)
