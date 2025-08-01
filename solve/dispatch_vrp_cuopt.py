@@ -2,6 +2,7 @@ from cuopt_sh_client import CuOptServiceSelfHostClient
 import json
 import time
 import numpy as np
+import random
 
 def gen_model_data():
     num_customers = 4
@@ -11,13 +12,16 @@ def gen_model_data():
     customers = nodes[1:]
     coords = np.random.rand(num_customers + 1, 2) * 100
     distance_matrix = np.round(np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=2), 2).tolist()
-    demands = [0] + [3, 2, 4, 1]
-    vehicle_capacities = [[5, 7]]
-    vehicle_fixed_costs = [100, 120]
-    vehicle_speeds = [40, 30]
-    vehicle_cost_per_km = [2, 3]
-    time_windows = [(0, 100), (10, 30), (20, 40), (15, 35), (25, 45)]
-    service_times = [0, 5, 5, 5, 5]
+    demands = [0] + [random.randint(1, 5) for _ in customers]
+    vehicle_capacities = [random.randint(15, 30) for _ in range(num_vehicles)]
+    vehicle_fixed_costs = [random.randint(0, 10) for _ in range(num_vehicles)]
+    time_windows = [(0, 100)]
+    for _ in customers:
+        e = random.randint(10, 30)
+        l = e + random.randint(10, 30)
+        time_windows.append((e, l))
+    service_times = [0] + [random.randint(3, 10) for _ in customers]
+    
     early_penalty = 10
     late_penalty = 20
     # 权重参数
@@ -36,8 +40,6 @@ def gen_model_data():
         "demands": demands,
         "vehicle_capacities": vehicle_capacities,
         "vehicle_fixed_costs": vehicle_fixed_costs,
-        "vehicle_speeds": vehicle_speeds,
-        "vehicle_cost_per_km": vehicle_cost_per_km,
         "time_windows": time_windows,
         "service_times": service_times,
         "early_penalty": early_penalty,
@@ -56,8 +58,6 @@ distance_matrix = np.array(model_data["distance_matrix"])
 demands = model_data["demands"]
 vehicle_capacities = model_data["vehicle_capacities"]
 vehicle_fixed_costs = model_data["vehicle_fixed_costs"]
-vehicle_speeds = model_data["vehicle_speeds"]
-vehicle_cost_per_km = model_data["vehicle_cost_per_km"]
 time_windows = model_data["time_windows"]
 service_times = model_data["service_times"]
 early_penalty = model_data["early_penalty"]
@@ -81,15 +81,15 @@ data = {
         "service_times": [service_times[i] for i in customers]
     },
     "fleet_data": {
-        "vehicle_locations": [[0,0],[0,0]],
-        "capacities": vehicle_capacities,
+        "vehicle_locations": [[0,0] for _ in range(num_vehicles)],
+        "capacities": [vehicle_capacities],
         "vehicle_fixed_costs": [w_fixed * fc for fc in vehicle_fixed_costs]
     }
 }
 
 cuopt_service_client = CuOptServiceSelfHostClient(
     ip="0.0.0.0",
-    port="5000",
+    port="5001",
     polling_timeout=25,
     timeout_exception=False
 )
