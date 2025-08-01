@@ -13,7 +13,7 @@ def gen_model_data():
     coords = np.random.rand(num_customers + 1, 2) * 100
     distance_matrix = np.round(np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=2), 2).tolist()
     demands = [0] + [random.randint(1, 5) for _ in customers]
-    vehicle_capacities = [random.randint(5, 10) for _ in range(num_vehicles)]
+    vehicle_capacities = [random.randint(15, 30) for _ in range(num_vehicles)]
     vehicle_speeds = [random.randint(30, 60) for _ in range(num_vehicles)]
     vehicle_fixed_costs = [random.randint(0, 10) for _ in range(num_vehicles)]
     vehicle_cost_per_km = [round(random.uniform(0.005, 0.015), 2) for _ in range(num_vehicles)]
