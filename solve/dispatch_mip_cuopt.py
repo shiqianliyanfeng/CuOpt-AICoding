@@ -26,7 +26,7 @@ def gen_model_data():
     beta = 10
     gamma = 20
     eta = 10
-    lambda_demand = [0] + [round(500 * demands[i], 2) for i in customers]
+    lambda_demand = [0] + [round(50 * demands[i], 2) for i in customers]
     cost_matrix = []
     for k in range(num_vehicles):
         cost_matrix.append([[round(distance_matrix[i][j] * vehicle_cost_per_km[k], 2) for j in nodes] for i in nodes])
@@ -157,25 +157,6 @@ for i in model_data["customers"]:
     csr_offsets.append(len(csr_indices))
     upper_bounds.append(0.0)
     lower_bounds.append(0.0)
-
-# 约束：每个客户被访问次数小于等于z_i
-for i in model_data["customers"]:
-    row_indices = []
-    row_values = []
-    for k in range(model_data["num_vehicles"]):
-        for j in model_data["nodes"]:
-            if j != i:
-                idx = variable_names.index(f"x_{j}_{i}_{k}")
-                row_indices.append(idx)
-                row_values.append(1.0)
-                idx_z = variable_names.index(f"z_{i}")
-                row_indices.append(idx_z)
-                row_values.append(-1.0)
-                csr_indices.extend(row_indices)
-                csr_values.extend(row_values)
-                csr_offsets.append(len(csr_indices))
-                upper_bounds.append(0.0)
-                lower_bounds.append(-np.inf)
 
 # 约束：每个节点流入等于流出
 for k in range(model_data["num_vehicles"]):
