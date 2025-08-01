@@ -390,7 +390,7 @@ for i in model_data["customers"]:
     objective_coeffs[idx_plus] += w_early * model_data["beta"]
     objective_coeffs[idx_minus] += w_late * model_data["gamma"]
     idx_z = variable_names.index(f"z_{i}")
-    objective_coeffs[idx_z] += w_unserved * model_data["lambda_demand"][i]
+    objective_coeffs[idx_z] -= w_unserved * model_data["lambda_demand"][i]
 
 data = {
     "csr_constraint_matrix": {
