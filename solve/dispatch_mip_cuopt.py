@@ -90,7 +90,7 @@ for k in range(model_data["num_vehicles"]):
 
 # a[i]: 到达时间
 a_indices = []
-for i in model_data["nodes"]:
+for i in model_data["customers"]:
     variable_names.append(f"a_{i}")
     variable_types.append("C")
     variable_bounds_lb.append(0)
@@ -99,7 +99,7 @@ for i in model_data["nodes"]:
 
 # u[i,k]: 车辆k在节点i的载重
 u_indices = []
-for i in model_data["nodes"]:
+for i in model_data["customers"]:
     for k in range(model_data["num_vehicles"]):
         variable_names.append(f"u_{i}_{k}")
         variable_types.append("C")
@@ -139,22 +139,6 @@ csr_values = []
 upper_bounds = []
 lower_bounds = []
 
-# 约束1：每个客户仅被服务一次
-for i in model_data["customers"]:
-    row_indices = []
-    row_values = []
-    for k in range(model_data["num_vehicles"]):
-        for j in model_data["nodes"]:
-            if j != i:
-                idx = variable_names.index(f"x_{j}_{i}_{k}")
-                row_indices.append(idx)
-                row_values.append(1.0)
-    csr_indices.extend(row_indices)
-    csr_values.extend(row_values)
-    csr_offsets.append(len(csr_indices))
-    upper_bounds.append(1.0)
-    lower_bounds.append(1.0)
-
 # 约束：每个客户被访问次数等于z_i
 for i in model_data["customers"]:
     row_indices = []
@@ -174,11 +158,28 @@ for i in model_data["customers"]:
     upper_bounds.append(0.0)
     lower_bounds.append(0.0)
 
+# 约束：每个客户被访问次数小于等于z_i
+for i in model_data["customers"]:
+    row_indices = []
+    row_values = []
+    for k in range(model_data["num_vehicles"]):
+        for j in model_data["nodes"]:
+            if j != i:
+                idx = variable_names.index(f"x_{j}_{i}_{k}")
+                row_indices.append(idx)
+                row_values.append(1.0)
+                idx_z = variable_names.index(f"z_{i}")
+                row_indices.append(idx_z)
+                row_values.append(-1.0)
+                csr_indices.extend(row_indices)
+                csr_values.extend(row_values)
+                csr_offsets.append(len(csr_indices))
+                upper_bounds.append(-np.inf)
+                lower_bounds.append(0.0)
+
 # 约束：每个节点流入等于流出
 for k in range(model_data["num_vehicles"]):
     for i in model_data["nodes"]:
-        if i == model_data["depot"]:
-            continue
         row_indices = []
         row_values = []
         for j in model_data["nodes"]:
@@ -195,35 +196,61 @@ for k in range(model_data["num_vehicles"]):
         upper_bounds.append(0.0)
         lower_bounds.append(0.0)
 
+M = 1e5
 # 约束：车辆容量变化
 for k in range(model_data["num_vehicles"]):
     for i in model_data["nodes"]:
-        if i == model_data["depot"]:
-            continue
-        row_indices = []
-        row_values = []
-        idx_u_i = variable_names.index(f"u_{i}_{k}")
-        row_indices.append(idx_u_i)
-        row_values.append(1.0)
-        for j in model_data["nodes"]:
+        for j in model_data["customers"]:
             if j != i:
+                row_indices = []
+                row_values = []
+
+                idx_u_i = variable_names.index(f"u_{i}_{k}")
+                row_indices.append(idx_u_i)
+                row_values.append(1.0)
+
                 idx_u_j = variable_names.index(f"u_{j}_{k}")
-                idx_x_ji = variable_names.index(f"x_{j}_{i}_{k}")
                 row_indices.append(idx_u_j)
                 row_values.append(-1.0)
-                row_indices.append(idx_x_ji)
-                row_values.append(-model_data["demands"][i])
-        csr_indices.extend(row_indices)
-        csr_values.extend(row_values)
-        csr_offsets.append(len(csr_indices))
-        upper_bounds.append(0.0)
-        lower_bounds.append(0.0)
+
+                idx_z_j = variable_names.index(f"z_{j}")
+                row_indices.append(idx_z_j)
+                row_values.append(model_data["demands"][i])
+
+                idx_x_ijk = variable_names.index(f"x_{j}_{i}_{k}")
+                row_indices.append(idx_x_ijk)
+                row_values.append(model_data["vehicle_capacities"][k])
+
+                csr_indices.extend(row_indices)
+                csr_values.extend(row_values)
+                csr_offsets.append(len(csr_indices))
+                upper_bounds.append(model_data["vehicle_capacities"][k])
+                lower_bounds.append(0.0)
+
+for k in range(model_data["num_vehicles"]):
+    for i in model_data["customers"]:
+                row_indices = []
+                row_values = []
+
+                idx_u_i = variable_names.index(f"u_{i}_{k}")
+                row_indices.append(idx_u_i)
+                row_values.append(-1.0)
+
+                idx_z_i = variable_names.index(f"z_{i}")
+                row_indices.append(idx_z_i)
+                row_values.append(model_data["demands"][i])
+
+                csr_indices.extend(row_indices)
+                csr_values.extend(row_values)
+                csr_offsets.append(len(csr_indices))
+                upper_bounds.append(0.0)
+                lower_bounds.append(-np.inf)
+
 
 # 约束：时间窗与服务时间
-M = 1e5
 for k in range(model_data["num_vehicles"]):
     for i in model_data["nodes"]:
-        for j in model_data["nodes"]:
+        for j in model_data["customers"]:
             if i != j:
                 idx_a_i = variable_names.index(f"a_{i}")
                 idx_a_j = variable_names.index(f"a_{j}")
@@ -235,8 +262,38 @@ for k in range(model_data["num_vehicles"]):
                 csr_indices.extend(row_indices)
                 csr_values.extend(row_values)
                 csr_offsets.append(len(csr_indices))
-                upper_bounds.append(idx_service_i + travel_time)
-                lower_bounds.append(-np.inf)
+                upper_bounds.append(np.inf)
+                lower_bounds.append(idx_service_i + travel_time - M)
+
+for i in model_data["customers"]:
+    row_indices = []
+    row_values = []
+    idx_delta_minus_i = variable_names.index(f"delta_minus_{i}")
+    row_indices.append(idx_delta_minus_i)
+    row_values.append(1.0)
+    idx_a_i = variable_names.index(f"a_{i}")
+    row_indices.append(idx_a_i)
+    row_values.append(-1.0)
+    csr_indices.extend(row_indices)
+    csr_values.extend(row_values)
+    csr_offsets.append(len(csr_indices))
+    upper_bounds.append(np.inf)
+    lower_bounds.append(-model_data["time_windows"][i][1])
+
+for i in model_data["customers"]:
+    row_indices = []
+    row_values = []
+    idx_delta_plus_i = variable_names.index(f"delta_plus_{i}")
+    row_indices.append(idx_delta_plus_i)
+    row_values.append(1.0)
+    idx_a_i = variable_names.index(f"a_{i}")
+    row_indices.append(idx_a_i)
+    row_values.append(1.0)
+    csr_indices.extend(row_indices)
+    csr_values.extend(row_values)
+    csr_offsets.append(len(csr_indices))
+    upper_bounds.append(np.inf)
+    lower_bounds.append(-model_data["time_windows"][i][0])
 
 # 约束：每辆车从depot出发一次
 for k in range(model_data["num_vehicles"]):
@@ -247,11 +304,72 @@ for k in range(model_data["num_vehicles"]):
             idx = variable_names.index(f"x_{model_data['depot']}_{j}_{k}")
             row_indices.append(idx)
             row_values.append(1.0)
+        idy = variable_names.index(f"y_{k}")
+        row_indices.append(idy)
+        row_values.append(-1.0)
     csr_indices.extend(row_indices)
     csr_values.extend(row_values)
     csr_offsets.append(len(csr_indices))
-    upper_bounds.append(1.0)
-    lower_bounds.append(1.0)
+    upper_bounds.append(0.0)
+    lower_bounds.append(0.0)
+
+# 约束：每辆车回到depot一次
+for k in range(model_data["num_vehicles"]):
+    row_indices = []
+    row_values = []
+    for j in model_data["nodes"]:
+        if j != model_data["depot"]:
+            idx = variable_names.index(f"x_{j}_{model_data['depot']}_{k}")
+            row_indices.append(idx)
+            row_values.append(1.0)
+        idy = variable_names.index(f"y_{k}")
+        row_indices.append(idy)
+        row_values.append(-1.0)
+    csr_indices.extend(row_indices)
+    csr_values.extend(row_values)
+    csr_offsets.append(len(csr_indices))
+    upper_bounds.append(0.0)
+    lower_bounds.append(0.0)
+
+# 约束：每辆车初始载重为0
+for k in range(model_data["num_vehicles"]):
+    row_indices = []
+    row_values = []
+    idx_u_0 = variable_names.index(f"u_{0}_{k}")
+    row_indices.append(idx_u_0)
+    row_values.append(1.0)
+    csr_indices.extend(row_indices)
+    csr_values.extend(row_values)
+    csr_offsets.append(len(csr_indices))
+    upper_bounds.append(0.0)
+    lower_bounds.append(0.0)
+
+idx_a_0 = variable_names.index(f"a_{0}")
+row_indices = [idx_a_0]
+row_values = [1.0]
+csr_indices.extend(row_indices)
+csr_values.extend(row_values)
+csr_offsets.append(len(csr_indices))
+upper_bounds.append(0.0)
+lower_bounds.append(0.0)
+
+for k in range(model_data["num_vehicles"]):
+    row_indices = []
+    row_values = []
+    for i in model_data["customers"]:
+        for j in model_data["customers"]:
+            if j != i:
+                idx = variable_names.index(f"x_{j}_{i}_{k}")
+                row_indices.append(idx)
+                row_values.append(1.0)
+    idx_y = variable_names.index(f"y_{k}")
+    row_indices.append(idx_y)
+    row_values.append(-M)
+    csr_indices.extend(row_indices)
+    csr_values.extend(row_values)
+    csr_offsets.append(len(csr_indices))
+    upper_bounds.append(0.0)
+    lower_bounds.append(-np.inf)
 
 # 目标函数
 objective_coeffs = [0.0] * len(variable_names)
@@ -266,13 +384,13 @@ for idx, k in enumerate(y_indices):
 for (i, j, k) in x_indices:
     idx = variable_names.index(f"x_{i}_{j}_{k}")
     objective_coeffs[idx] += w_distance * model_data["vehicle_cost_per_km"][k] * model_data["distance_matrix"][i][j]
-# for i in model_data["customers"]:
-#     idx_plus = variable_names.index(f"delta_plus_{i}")
-#     idx_minus = variable_names.index(f"delta_minus_{i}")
-#     objective_coeffs[idx_plus] += w_early * model_data["beta"]
-#     objective_coeffs[idx_minus] += w_late * model_data["gamma"]
-#     idx_z = variable_names.index(f"z_{i}")
-#     objective_coeffs[idx_z] += w_unserved * model_data["lambda_demand"][i]
+for i in model_data["customers"]:
+    idx_plus = variable_names.index(f"delta_plus_{i}")
+    idx_minus = variable_names.index(f"delta_minus_{i}")
+    objective_coeffs[idx_plus] += w_early * model_data["beta"]
+    objective_coeffs[idx_minus] += w_late * model_data["gamma"]
+    idx_z = variable_names.index(f"z_{i}")
+    objective_coeffs[idx_z] += w_unserved * model_data["lambda_demand"][i]
 
 data = {
     "csr_constraint_matrix": {
