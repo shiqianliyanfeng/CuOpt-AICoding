@@ -20,10 +20,10 @@ def gen_model_data():
     for k in range(num_vehicles):
         cost_matrix.append([[round(distance_matrix[i][j] * vehicle_cost_per_km[k], 2) for j in nodes] for i in nodes])
 
-    time_windows = [(0, 100)]
+    time_windows = [(0, 500)]
     for _ in customers:
         e = random.randint(0, 0)
-        l = e + random.randint(70, 90)
+        l = e + random.randint(200, 300)
         time_windows.append((e, l))
     service_times = [0] + [random.randint(3, 10) for _ in customers]
     
@@ -88,8 +88,8 @@ data = {
     "task_data": {
         "task_locations": customers,
         "demand": [[demands[i] for i in customers]],
-        #"task_time_windows": [list(time_windows[i]) for i in customers],
-        #"service_times": [service_times[i] for i in customers]
+        "task_time_windows": [list(time_windows[i]) for i in customers],
+        "service_times": [service_times[i] for i in customers]
     },
     "fleet_data": {
         "vehicle_locations": [[0,0] for _ in range(num_vehicles)],
