@@ -82,14 +82,13 @@ w_late = model_data["w_late"]
 data = {
     "cost_matrix_data": {
         "data": {
-            "0": distance_matrix,
-            "1": distance_matrix
+            "0": distance_matrix
         }
     },
     "travel_time_matrix_data": {
         "data": {
-            "0": cost_matrix[0],
-            "1": cost_matrix[1]
+            "1": cost_matrix[0],
+            "2": cost_matrix[1]
         }
     },
     "task_data": {
