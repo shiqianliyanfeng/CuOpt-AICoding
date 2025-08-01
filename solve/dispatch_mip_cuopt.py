@@ -174,8 +174,8 @@ for i in model_data["customers"]:
                 csr_indices.extend(row_indices)
                 csr_values.extend(row_values)
                 csr_offsets.append(len(csr_indices))
-                upper_bounds.append(-np.inf)
-                lower_bounds.append(0.0)
+                upper_bounds.append(0.0)
+                lower_bounds.append(-np.inf)
 
 # 约束：每个节点流入等于流出
 for k in range(model_data["num_vehicles"]):
