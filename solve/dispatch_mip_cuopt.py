@@ -74,7 +74,7 @@ for k in range(model_data["num_vehicles"]):
         for j in model_data["nodes"]:
             if i != j:
                 variable_names.append(f"x_{i}_{j}_{k}")
-                variable_types.append("B")
+                variable_types.append("I")
                 variable_bounds_lb.append(0)
                 variable_bounds_ub.append(1)
                 x_indices.append((i, j, k))
@@ -83,7 +83,7 @@ for k in range(model_data["num_vehicles"]):
 y_indices = []
 for k in range(model_data["num_vehicles"]):
     variable_names.append(f"y_{k}")
-    variable_types.append("B")
+    variable_types.append("I")
     variable_bounds_lb.append(0)
     variable_bounds_ub.append(1)
     y_indices.append(k)
@@ -126,7 +126,7 @@ for i in model_data["customers"]:
 z_indices = []
 for i in model_data["customers"]:
     variable_names.append(f"z_{i}")
-    variable_types.append("B")
+    variable_types.append("I")
     variable_bounds_lb.append(0)
     variable_bounds_ub.append(1)
     z_indices.append(i)
