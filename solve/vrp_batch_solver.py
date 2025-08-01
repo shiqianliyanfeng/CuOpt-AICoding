@@ -411,6 +411,6 @@ class VRPMIPBatchSolver:
 if __name__ == "__main__":
     current_dir = os.getcwd()
     print(current_dir)
-    solver = VRPMIPBatchSolver("./data/vrp_dataset_100.json")
+    solver = VRPMIPBatchSolver("../data/vrp_dataset_100.json")
     solver.batch_solve()
     solver.show_stats()
