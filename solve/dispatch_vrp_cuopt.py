@@ -123,7 +123,7 @@ print(json.dumps(solution, indent=4))
 # 输出结果
 if "response" in solution:
     resp = solution["response"]
-    print("目标值:", resp.get("objective_value"))
+    print("目标值:", resp.get("objective_values"))
     for idx, route in enumerate(resp.get("routes", [])):
         print(f"车辆{idx}路径:", route)
     if "arrival_times" in resp:
