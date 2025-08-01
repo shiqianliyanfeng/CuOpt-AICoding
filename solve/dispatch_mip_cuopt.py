@@ -424,6 +424,7 @@ solution = repoll(solution)
 if "response" in solution:
     resp = solution["response"]
     if "solver_response" in resp and "solution" in resp["solver_response"]:
+        print(json.dumps(resp, indent=4))
         sol = resp["solver_response"]["solution"]
         vars = sol.get("vars", {})
         objective = sol.get("primal_objective", None)
