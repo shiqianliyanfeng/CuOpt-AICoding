@@ -3,6 +3,7 @@ import json
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 class VRPMIPBatchSolver:
     def __init__(self, data_path, ip="0.0.0.0", port=5001):
@@ -408,6 +409,7 @@ class VRPMIPBatchSolver:
 
 # 用法示例
 if __name__ == "__main__":
+    current_dir = os.getcwd()
     solver = VRPMIPBatchSolver("./data/vrp_dataset_100.json")
     solver.batch_solve()
     solver.show_stats()
