@@ -96,7 +96,7 @@ data = {
         "capacities": [vehicle_capacities]
         #"vehicle_fixed_costs": [w_fixed * fc for fc in vehicle_fixed_costs],
     },
-    "solver_config": {"time_limit": 60}
+    "solver_config": {"time_limit": 20}
 }
 
 cuopt_service_client = CuOptServiceSelfHostClient(
