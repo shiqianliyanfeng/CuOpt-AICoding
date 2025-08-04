@@ -5,6 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+# callback should accept 2 values, one is solution and another is cost
+def callback(solution, solution_cost):
+    print(f"Solution : {solution} cost : {solution_cost}\n")
+
+# Logging callback
+def log_callback(log):
+    for i in log:
+        print("server-log: ", i)
+
 class VRPMIPBatchSolver:
     def __init__(self, data_path, ip="0.0.0.0", port=5001):
         with open(data_path, "r") as f:
@@ -362,10 +371,11 @@ class VRPMIPBatchSolver:
             }
         }
 
+
     def solve_instance(self, instance):
         data = self.build_problem_data(instance)
         start = time.time()
-        solution = self.cuopt_service_client.get_LP_solve(data, response_type="dict")
+        solution = self.cuopt_service_client.get_LP_solve(data, incumbent_callback=callback, response_type="dict", logging_callback=log_callback)
         solution = self.repoll(solution)
         elapsed = time.time() - start
 
