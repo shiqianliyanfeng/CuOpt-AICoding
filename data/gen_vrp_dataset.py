@@ -83,7 +83,7 @@ for _ in range(100):
     instance = gen_one_instance(num_customers, num_vehicles)
     dataset.append(instance)
 
-with open("vrp_dataset_100.json", "w") as f:
+with open("./data/vrp_dataset_100.json", "w") as f:
     json.dump(dataset, f, indent=2)
 
 print("已生成并保存100组VRP数据集到 vrp_dataset_100.json")
