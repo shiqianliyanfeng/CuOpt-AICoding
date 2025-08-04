@@ -393,11 +393,12 @@ class VRPMIPBatchSolver:
 
     def batch_solve(self):
         for idx, instance in enumerate(self.instances):
-            obj, t, used = self.solve_instance(instance)
-            self.stats["objective"].append(obj)
-            self.stats["time"].append(t)
-            self.stats["used_vehicles"].append(used)
-            print(f"Instance {idx+1}/{self.num_instances}: Obj={obj}, Time={t:.2f}s, Used Vehicles={used}")
+            if idx < 10:
+                obj, t, used = self.solve_instance(instance)
+                self.stats["objective"].append(obj)
+                self.stats["time"].append(t)
+                self.stats["used_vehicles"].append(used)
+                print(f"Instance {idx+1}/{self.num_instances}: Obj={obj}, Time={t:.2f}s, Used Vehicles={used}")
 
     def show_stats(self):
         if self.stats["objective"]:
