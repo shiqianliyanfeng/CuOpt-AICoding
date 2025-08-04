@@ -373,7 +373,7 @@ class VRPMIPBatchSolver:
         objective = None
         if "response" in solution:
             resp = solution["response"]
-            print(json.dumps(resp, indent=4))
+            #print(json.dumps(resp, indent=4))
             if "solver_response" in resp and "solution" in resp["solver_response"]:
                 sol = resp["solver_response"]["solution"]
                 vars = sol.get("vars", {})
