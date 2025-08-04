@@ -375,7 +375,7 @@ class VRPMIPBatchSolver:
     def solve_instance(self, instance):
         data = self.build_problem_data(instance)
         start = time.time()
-        solution = self.cuopt_service_client.get_LP_solve(data, incumbent_callback=callback, response_type="dict", logging_callback=log_callback)
+        solution = self.cuopt_service_client.get_LP_solve(data, response_type="dict")
         solution = self.repoll(solution)
         elapsed = time.time() - start
 
