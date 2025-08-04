@@ -408,6 +408,15 @@ cuopt_service_client = CuOptServiceSelfHostClient(
     timeout_exception=False
 )
 
+# callback should accept 2 values, one is solution and another is cost
+def callback(solution, solution_cost):
+    print(f"Solution : {solution} cost : {solution_cost}\n")
+
+# Logging callback
+def log_callback(log):
+    for i in log:
+        print("server-log: ", i)
+
 def repoll(solution, repoll_tries=500):
     if "reqId" in solution and "response" not in solution:
         req_id = solution["reqId"]
@@ -418,7 +427,7 @@ def repoll(solution, repoll_tries=500):
             time.sleep(1)
     return solution
 
-solution = cuopt_service_client.get_LP_solve(data, response_type="dict")
+solution = cuopt_service_client.get_LP_solve(data, incumbent_callback=callback, response_type="dict", logging_callback=log_callback)
 solution = repoll(solution)
 
 if "response" in solution:
