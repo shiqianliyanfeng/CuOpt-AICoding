@@ -1,6 +1,6 @@
 import pytest
 import os
-from vrp_solver import solver_factory
+from solver.vrp_solver import solver_factory
 
 def make_trivial_instance():
     # depot 0, one customer 1, single vehicle

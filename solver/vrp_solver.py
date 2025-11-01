@@ -1,40 +1,9 @@
-import time
-from typing import Dict, Any, Optional
-from abc import ABC, abstractmethod
+"""Compatibility wrapper: expose top-level vrp_solver symbols under solver.vrp_solver
 
-# Solver interface
-class BaseSolver(ABC):
-    @abstractmethod
-    def solve(self, instance: Dict, time_limit: Optional[float] = None) -> Dict[str, Any]:
-        """
-        Solve one instance.
+Some tests and modules import `solver.vrp_solver`. The real implementation
+lives at top-level `vrp_solver.py` in this repository; re-export the key
+symbols here so both import styles work.
+"""
+from vrp_solver import solver_factory, BaseSolver
 
-        Returns a dict with keys (at minimum):
-          - objective (float or None)
-          - elapsed (seconds)
-          - used_vehicles (int or None)
-          - gap, best_bound, nodes, memory (may be None)
-          - status (str)
-          - vars (dict) optional raw variables
-        """
-        pass
-
-# Factory
-def solver_factory(name: str):
-    name = name.lower()
-    if name in ("cbc", "ortools", "or-tools"):
-        from solver.solver_impl_cbc import SolverCBC
-        return SolverCBC()
-    if name == "scip":
-        from solver.solver_impl_scip import SolverSCIP
-        return SolverSCIP()
-    if name == "gurobi":
-        from solver.solver_impl_gurobi import SolverGurobi
-        return SolverGurobi()
-    if name in ("cuopt_vrp", "cuopt_sh_vrp"):
-        from solver.solver_impl_cuopt_mip import SolverCuOpt
-        return SolverCuOpt()
-    if name in ("cuopt_mip", "cuopt_sh_mip"):
-        from solver.solver_impl_cuopt_vrp import SolverCuOptVRP
-        return SolverCuOptVRP()
-    raise ValueError(f"Unknown solver '{name}'")
+__all__ = ["solver_factory", "BaseSolver"]
