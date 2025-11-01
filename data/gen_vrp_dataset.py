@@ -1,52 +1,39 @@
-import numpy as np
+import argparse
 import json
 import random
+from typing import List, Dict
+import numpy as np
 
-def gen_one_instance(num_customers=10, num_vehicles=3):
+
+def gen_one_instance(num_customers: int = 10, num_vehicles: int = 3, seed: int | None = None) -> Dict:
+    rng = np.random.RandomState(seed)
+    coords = rng.rand(num_customers + 1, 2) * 100
+    nodes = list(range(num_customers + 1))
     depot = 0
-    nodes = list(range(num_customers + 1))  # 0为depot
     customers = nodes[1:]
-
-    # 坐标和距离矩阵
-    coords = np.random.rand(num_customers + 1, 2) * 100
     distance_matrix = np.round(np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=2), 2).tolist()
 
-    # 客户需求
-    demands = [0] + [random.randint(1, 5) for _ in customers]
+    demands = [0] + [int(random.randint(1, 5)) for _ in customers]
+    vehicle_capacities = [int(random.randint(max(10, num_customers), max(20, num_customers * 2))) for _ in range(num_vehicles)]
+    vehicle_speeds = [int(random.randint(20, 60)) for _ in range(num_vehicles)]
+    vehicle_fixed_costs = [int(random.randint(0, 10)) for _ in range(num_vehicles)]
+    vehicle_cost_per_km = [round(random.uniform(0.005, 0.02), 4) for _ in range(num_vehicles)]
 
-    # 车辆参数
-    vehicle_capacities = [random.randint(15, 30) for _ in range(num_vehicles)]
-    vehicle_speeds = [random.randint(30, 60) for _ in range(num_vehicles)]
-    vehicle_fixed_costs = [random.randint(0, 10) for _ in range(num_vehicles)]
-    vehicle_cost_per_km = [round(random.uniform(0.05, 0.15), 2) for _ in range(num_vehicles)]
-
-    # 时间窗和服务时间
-    time_windows = [(0, 100)]  # depot
+    time_windows = [(0, 100)]
     for _ in customers:
-        e = random.randint(10, 30)
-        l = e + random.randint(10, 30)
+        e = random.randint(0, 50)
+        l = e + random.randint(10, 60)
         time_windows.append((e, l))
-    service_times = [0] + [random.randint(3, 10) for _ in customers]
+    service_times = [0] + [int(random.randint(1, 10)) for _ in customers]
 
-    # 软时间窗惩罚系数
     beta = 10
     gamma = 20
-
-    # 未满足需求的惩罚系数
     eta = 10
     lambda_demand = [0] + [round(50 * demands[i], 2) for i in customers]
 
-    # 单位距离成本矩阵 c_{ij}^k * d_{ij}
     cost_matrix = []
     for k in range(num_vehicles):
-        cost_matrix.append([[round(distance_matrix[i][j] * vehicle_cost_per_km[k], 2) for j in nodes] for i in nodes])
-
-    # 权重参数
-    w_fixed = 1.0
-    w_distance = 1.0
-    w_early = 1.0
-    w_late = 1.0
-    w_unserved = 1.0
+        cost_matrix.append([[round(distance_matrix[i][j] * vehicle_cost_per_km[k], 4) for j in nodes] for i in nodes])
 
     return {
         "num_customers": num_customers,
@@ -68,22 +55,39 @@ def gen_one_instance(num_customers=10, num_vehicles=3):
         "eta": eta,
         "lambda_demand": lambda_demand,
         "cost_matrix": cost_matrix,
-        "w_fixed": w_fixed,
-        "w_distance": w_distance,
-        "w_early": w_early,
-        "w_late": w_late,
-        "w_unserved": w_unserved
+        "w_fixed": 1.0,
+        "w_distance": 1.0,
+        "w_early": 1.0,
+        "w_late": 1.0,
+        "w_unserved": 1.0,
     }
 
-# 生成100组数据
-dataset = []
-for _ in range(100):
-    num_customers = random.randint(8, 15)
-    num_vehicles = random.randint(2, 5)
-    instance = gen_one_instance(num_customers, num_vehicles)
-    dataset.append(instance)
 
-with open("./data/vrp_dataset_100.json", "w") as f:
-    json.dump(dataset, f, indent=2)
+def gen_dataset(n_instances: int = 100, n_customers: int = 10, n_vehicles: int = 3, seed: int | None = None) -> List[Dict]:
+    out = []
+    rng = random.Random(seed)
+    for i in range(n_instances):
+        nc = max(1, int(n_customers + rng.randint(-2, 2)))
+        nv = max(1, int(n_vehicles + rng.randint(-1, 1)))
+        inst_seed = None if seed is None else seed + i
+        out.append(gen_one_instance(nc, nv, seed=inst_seed))
+    return out
 
-print("已生成并保存100组VRP数据集到 vrp_dataset_100.json")
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate VRP dataset JSON files compatible with this project")
+    parser.add_argument("--n-instances", type=int, default=100)
+    parser.add_argument("--n-customers", type=int, default=10)
+    parser.add_argument("--n-vehicles", type=int, default=3)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--out", type=str, default="./data/vrp_dataset_100.json")
+    args = parser.parse_args()
+
+    dataset = gen_dataset(args.n_instances, args.n_customers, args.n_vehicles, seed=args.seed)
+    with open(args.out, "w", encoding="utf-8") as f:
+        json.dump(dataset, f, indent=2, ensure_ascii=False)
+    print(f"Wrote {len(dataset)} instances to {args.out}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,8 @@
+numpy
+matplotlib
+pyyaml
+ortools
+pytest
+pyscipopt
+gurobipy
+cuopt_sh_client

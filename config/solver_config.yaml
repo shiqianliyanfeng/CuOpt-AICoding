@@ -1,0 +1,5 @@
+# 默认 solver 配置（可被实例内 time_limit 覆盖或通过 runner 参数替换）
+default_solver: cbc
+default_time_limit: 30        # seconds per instance
+outputs_dir: outputs
+log_level: INFO
