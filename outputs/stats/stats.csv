@@ -1,0 +1,6 @@
+instance_id,solver,objective,elapsed,used_vehicles,gap,best_bound,nodes,memory,status
+1,cbc,-2611.767,30.118637800216675,1,,,,,FEASIBLE
+2,cbc,-1277.9992,5.358633041381836,1,,,,,OPTIMAL
+3,cbc,-2722.5741,30.062981128692627,1,,,,,FEASIBLE
+4,cbc,-925.2618,9.483735084533691,1,,,,,OPTIMAL
+5,cbc,-1825.4926,30.190645933151245,1,,,,,FEASIBLE

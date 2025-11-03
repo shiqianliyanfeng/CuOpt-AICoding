@@ -1,0 +1,11 @@
+2025-11-03 10:13:36,774 INFO Start instance 1 with solver=cbc time_limit=30s
+2025-11-03 10:14:08,053 INFO Done instance 1: {'instance_id': 1, 'solver': 'cbc', 'objective': -2611.767, 'elapsed': 30.118637800216675, 'used_vehicles': 1, 'gap': None, 'best_bound': None, 'nodes': None, 'memory': None, 'status': 'FEASIBLE'}
+2025-11-03 10:14:08,054 INFO Start instance 2 with solver=cbc time_limit=30s
+2025-11-03 10:14:13,521 INFO Done instance 2: {'instance_id': 2, 'solver': 'cbc', 'objective': -1277.9992, 'elapsed': 5.358633041381836, 'used_vehicles': 1, 'gap': None, 'best_bound': None, 'nodes': None, 'memory': None, 'status': 'OPTIMAL'}
+2025-11-03 10:14:13,522 INFO Start instance 3 with solver=cbc time_limit=30s
+2025-11-03 10:14:43,691 INFO Done instance 3: {'instance_id': 3, 'solver': 'cbc', 'objective': -2722.5741, 'elapsed': 30.062981128692627, 'used_vehicles': 1, 'gap': None, 'best_bound': None, 'nodes': None, 'memory': None, 'status': 'FEASIBLE'}
+2025-11-03 10:14:43,691 INFO Start instance 4 with solver=cbc time_limit=30s
+2025-11-03 10:14:53,244 INFO Done instance 4: {'instance_id': 4, 'solver': 'cbc', 'objective': -925.2618, 'elapsed': 9.483735084533691, 'used_vehicles': 1, 'gap': None, 'best_bound': None, 'nodes': None, 'memory': None, 'status': 'OPTIMAL'}
+2025-11-03 10:14:53,244 INFO Start instance 5 with solver=cbc time_limit=30s
+2025-11-03 10:15:23,525 INFO Done instance 5: {'instance_id': 5, 'solver': 'cbc', 'objective': -1825.4926, 'elapsed': 30.190645933151245, 'used_vehicles': 1, 'gap': None, 'best_bound': None, 'nodes': None, 'memory': None, 'status': 'FEASIBLE'}
+2025-11-03 10:15:23,526 INFO Saved stats to outputs/stats/stats.csv and outputs/stats/stats.json

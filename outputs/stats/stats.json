@@ -1,0 +1,62 @@
+[
+  {
+    "instance_id": 1,
+    "solver": "cbc",
+    "objective": -2611.767,
+    "elapsed": 30.118637800216675,
+    "used_vehicles": 1,
+    "gap": null,
+    "best_bound": null,
+    "nodes": null,
+    "memory": null,
+    "status": "FEASIBLE"
+  },
+  {
+    "instance_id": 2,
+    "solver": "cbc",
+    "objective": -1277.9992,
+    "elapsed": 5.358633041381836,
+    "used_vehicles": 1,
+    "gap": null,
+    "best_bound": null,
+    "nodes": null,
+    "memory": null,
+    "status": "OPTIMAL"
+  },
+  {
+    "instance_id": 3,
+    "solver": "cbc",
+    "objective": -2722.5741,
+    "elapsed": 30.062981128692627,
+    "used_vehicles": 1,
+    "gap": null,
+    "best_bound": null,
+    "nodes": null,
+    "memory": null,
+    "status": "FEASIBLE"
+  },
+  {
+    "instance_id": 4,
+    "solver": "cbc",
+    "objective": -925.2618,
+    "elapsed": 9.483735084533691,
+    "used_vehicles": 1,
+    "gap": null,
+    "best_bound": null,
+    "nodes": null,
+    "memory": null,
+    "status": "OPTIMAL"
+  },
+  {
+    "instance_id": 5,
+    "solver": "cbc",
+    "objective": -1825.4926,
+    "elapsed": 30.190645933151245,
+    "used_vehicles": 1,
+    "gap": null,
+    "best_bound": null,
+    "nodes": null,
+    "memory": null,
+    "status": "FEASIBLE"
+  }
+]

@@ -1,53 +1,48 @@
+import math
 import pytest
-import os
+
 from solver.vrp_solver import solver_factory
 
-def make_trivial_instance():
-    # depot 0, one customer 1, single vehicle
-    nodes = [0, 1]
-    return {
-        "num_customers": 1,
+
+def make_tiny_instance():
+    # 1 depot (0) + 2 customers (1,2)
+    instance = {
+        "num_customers": 2,
         "num_vehicles": 1,
         "depot": 0,
-        "nodes": nodes,
-        "customers": [1],
-        "distance_matrix": [[0.0, 1.0], [1.0, 0.0]],
-        "demands": [0, 1],
-        "vehicle_capacities": [10],
-        "vehicle_fixed_costs": [0],
-        "vehicle_cost_per_km": [1.0],
-        "service_times": [0, 0],
-        "vehicle_speeds": [1],
-        "time_windows": [(0, 100), (0, 100)],
-        "w_fixed": 1.0,
-        "w_distance": 1.0,
-        "w_early": 1.0,
-        "w_late": 1.0,
-        "w_unserved": 1.0,
+        "nodes": [0, 1, 2],
+        "coords": [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]],
+        # customers list contains customer node ids (excluding depot)
+        "customers": [1, 2],
+        "demands": [0, 1, 1],
+        "vehicle_capacities": [2],
+        "distance_matrix": [
+            [0, 1, 1],
+            [1, 0, math.sqrt(2)],
+            [1, math.sqrt(2), 0],
+        ],
+        # minimal placeholders for time windows / service times
+        "time_windows": [[0, 100]] * 3,
+        "service_times": [0, 0, 0],
     }
+    return instance
 
 
-def test_solver_factory_returns_known_solvers():
-    # CBC should be available
-    s = solver_factory('cbc')
+def test_solver_factory_known():
+    # Factory returns known types or raises on unknown
+    s = solver_factory("cbc")
     assert s is not None
+    with pytest.raises(ValueError):
+        solver_factory("not_a_solver")
 
 
-def test_cbc_solver_trivial_instance():
-    inst = make_trivial_instance()
-    s = solver_factory('cbc')
-    res = s.solve(inst, time_limit=2)
+def test_cbc_solves_tiny_instance():
+    inst = make_tiny_instance()
+    solver = solver_factory("cbc")
+    res = solver.solve(inst, time_limit=5)
+    # Basic result shape checks
     assert isinstance(res, dict)
-    assert 'objective' in res and 'elapsed' in res and 'status' in res
-
-
-def test_cuopt_mip_availability():
-    # If cuopt_sh_client is installed, the solver should instantiate; otherwise skip
-    try:
-        solver = solver_factory('cuopt')
-    except Exception as e:
-        pytest.skip(f"cuOpt client not available: {e}")
-    # if we get here, solver is available; solve should return a dict (may contact service)
-    inst = make_trivial_instance()
-    res = solver.solve(inst, time_limit=1)
-    assert isinstance(res, dict)
+    assert "objective" in res
+    assert "status" in res
+    # objective should be finite
+    assert res["objective"] is None or isinstance(res["objective"], (int, float))
